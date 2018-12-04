@@ -1,4 +1,4 @@
-﻿#define DEBUG
+﻿//#define DEBUG
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Configuration;
 
 namespace PYJ_Publish
 {
@@ -59,8 +60,10 @@ namespace PYJ_Publish
                 Console.WriteLine("매개변수가 잘못 되었습니다.");
                 return;
             }
-            procName = args[0];
-            uri = args[1];
+            //procName = args[0];
+            //uri = args[1];
+            procName = ConfigurationManager.AppSettings["procName"];
+            uri = ConfigurationManager.AppSettings["uri"];
 
             // 버전 체크
             if (!NeedUpdate()) return;
