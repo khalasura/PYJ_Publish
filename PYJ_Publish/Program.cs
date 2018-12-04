@@ -15,6 +15,8 @@ namespace PYJ_Publish
 {
     class Program
     {
+        // test
+
         #region 윈도우메세지 상수
         public const int WM_SYSCOMMAND = 0x0112;
         public const int SC_CLOSE = 0xF060;
