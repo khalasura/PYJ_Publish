@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Configuration;
+using System.Net.Sockets;
 
 namespace PYJ_Publish
 {
@@ -45,25 +46,31 @@ namespace PYJ_Publish
 
         static void Main(string[] args)
         {
-#if DEBUG
-            args = new[] { "SisHmi", "http://128.131.136.4/file/sishmi.zip" };
-#endif
             newPath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location).Replace(exeFolder, string.Empty);
-            handle = Process.GetCurrentProcess().MainWindowHandle;
-            SendMessage(handle, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+
+            // 창 내리기
+            try
+            {
+                handle = Process.GetCurrentProcess().MainWindowHandle;
+                SendMessage(handle, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+            }
+            catch { }
+
+            // 타이틀 설정
             Console.Title = "PYJ 버전 관리 매니저";
             Console.CursorVisible = false;
 
-            // [0]:타스크명, [1]:다운로드 URL
-            if (args.Length != 2)
-            {
-                Console.WriteLine("매개변수가 잘못 되었습니다.");
-                return;
-            }
-            //procName = args[0];
-            //uri = args[1];
+            // 아이피리스트 가져오기
+            var IpList = GetLocalIPAddress();
+
+            // 타스트명, 다운로드 주소
             procName = ConfigurationManager.AppSettings["procName"];
-            uri = ConfigurationManager.AppSettings["uri"];
+            var uri1 = ConfigurationManager.AppSettings["uri"];  // L2: 128.*.*.*
+            var uri2 = ConfigurationManager.AppSettings["uri2"]; // 전용망: 192.168.79.*
+
+            // 192가 있다면 전용망, 192가 없다면 레벨2망
+            var find = IpList.FirstOrDefault(g => g.ToString().StartsWith("192"));
+            uri = find == null ? uri1 : uri2;
 
             // 버전 체크
             if (!NeedUpdate()) return;
@@ -252,7 +259,23 @@ namespace PYJ_Publish
                 if (subDir == $"{tempFolder}\\{exeFolder}") continue;
                 CopyFiles(subDir, newPath);
             }
-        }        
+        }
+
+        private static List<IPAddress> GetLocalIPAddress()
+        {
+            try
+            {
+                var host = Dns.GetHostEntry(Dns.GetHostName());
+                var list = host.AddressList.Where(g => g.AddressFamily == AddressFamily.InterNetwork).ToList();
+                return list;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"IP체크: {ex.Message}");
+                return null;
+            }
+
+        }
     }
 
     public enum UpdatingState
